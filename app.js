@@ -1,5 +1,6 @@
 let screen = document.querySelector('.screen');
 
+const MAX_DISPLAY_LENGTH = 14;
 let firstArgument, secondArgument;
 let operator;
 
@@ -11,7 +12,7 @@ document.querySelectorAll('.btn').forEach(function(btn) {
                     if (firstArgument == undefined) {
                         screen.innerText = e.target.innerText;
                     } else {
-                        screen.innerText = screen.innerText + e.target.innerText;
+                        screen.innerText = Number(screen.innerText + e.target.innerText);
                     }
 
                     firstArgument = parseInt(screen.innerText);
@@ -21,7 +22,7 @@ document.querySelectorAll('.btn').forEach(function(btn) {
                     if (secondArgument == undefined) {
                         screen.innerText = e.target.innerText;
                     } else {
-                        screen.innerText = screen.innerText + e.target.innerText;
+                        screen.innerText = Number(screen.innerText + e.target.innerText);
                     }
 
                     secondArgument = parseInt(screen.innerText);
@@ -114,9 +115,25 @@ function calculateResult() {
             break;
 
         case '÷':
-            screen.innerText = (divide(firstArgument, secondArgument)).toFixed(3);
+            let result = divide(firstArgument, secondArgument);
+            if (!Number.isInteger(result)) {
+                result = formatDecimalNumber(result);
+            }
+
+            screen.innerText = result;
             break;
     }
 
     return parseInt(screen.innerText);
+}
+
+function formatDecimalNumber(decimalNumber) {
+    const decimalNumberPartsArr = String(decimalNumber).split('.'); // [integerPart, decimalPart]
+    let availableLength = MAX_DISPLAY_LENGTH - decimalNumberPartsArr[0].length;
+
+    if (decimalNumberPartsArr[1].length <= availableLength) {
+        return decimalNumber;
+    }
+    
+    return decimalNumber.toFixed(availableLength);
 }
