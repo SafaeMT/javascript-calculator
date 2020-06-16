@@ -37,33 +37,20 @@ document.querySelectorAll('.btn').forEach(function(btn) {
                     deleteLastDigit();
                     break;
 
-                case '+':
-                    if (firstArgument != undefined) {
-                        operator = '+';
-                    }
-                    break;
-
-                case '−':
-                    if (firstArgument != undefined) {
-                        operator = '−';
-                    }
-                    break;
-                
-                case '×':
-                    if (firstArgument != undefined) {
-                        operator = '×';
-                    }
-                    break;
-
-                case '÷':
-                    if (firstArgument != undefined) {
-                        operator = '÷';
-                    }
-                    break;
-
                 case '=':
                     if (firstArgument != undefined && secondArgument != undefined && operator != undefined) {
                         calculateResult();
+                        firstArgument = secondArgument = operator = undefined;
+                    }
+                    break;
+
+                default:
+                    if (firstArgument != undefined && secondArgument != undefined && operator != undefined) {
+                        firstArgument = calculateResult();
+                        secondArgument = undefined;
+                        operator = e.target.innerText;
+                    } else if (firstArgument != undefined) {
+                        operator = e.target.innerText;
                     }
                     break;
             }
@@ -81,6 +68,12 @@ function deleteLastDigit() {
         screen.innerText = 0;
     } else {
         screen.innerText = screen.innerText.substring(0, screen.innerText.length - 1);
+    }
+
+    // Réinitialisation de l'opérateur si le second argument = undefined
+    // et que le nombre affiché à l'écran est modifié
+    if (operator != undefined && secondArgument == undefined) {
+        operator = undefined;
     }
 
     if (operator == undefined) {
@@ -125,5 +118,5 @@ function calculateResult() {
             break;
     }
 
-    firstArgument = secondArgument = operator = undefined;
+    return parseInt(screen.innerText);
 }
