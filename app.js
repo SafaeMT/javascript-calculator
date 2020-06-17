@@ -4,59 +4,34 @@ const MAX_DISPLAY_LENGTH = 14;
 let firstArgument, secondArgument;
 let operator;
 
-document.querySelectorAll('.btn').forEach(function(btn) {
-    btn.addEventListener('click', function (e) {
-        if (Number.isInteger(parseInt(e.target.innerText))) {
-            switch (operator) {
-                case undefined:
-                    if (firstArgument == undefined) {
-                        screen.innerText = e.target.innerText;
-                    } else {
-                        screen.innerText = Number(screen.innerText + e.target.innerText);
-                    }
+// Utilisation d'un seul event listener qui tire profit de la propagation des évènements
+document.querySelector('.buttons').addEventListener('click', function (e) {
+    if (e.target.tagName === 'BUTTON') {
+        switch (e.target.innerText) {
+            case 'C':
+                reset();
+                break;
 
-                    firstArgument = parseInt(screen.innerText);
-                    break;
+            case '←':
+                deleteLastDigit();
+                break;
 
-                default:
-                    if (secondArgument == undefined) {
-                        screen.innerText = e.target.innerText;
-                    } else {
-                        screen.innerText = Number(screen.innerText + e.target.innerText);
-                    }
+            case '=':
+                calculateResult();
+                break;
 
-                    secondArgument = parseInt(screen.innerText);
-                    break;
-            }
-        } else {
-            switch (e.target.innerText) {
-                case 'C':
-                    reset();
-                    break;
+            case '+':
+            case '−':
+            case '×':
+            case '÷':
+                updateState(e.target.innerText);
+                break;
 
-                case '←':
-                    deleteLastDigit();
-                    break;
-
-                case '=':
-                    if (firstArgument != undefined && secondArgument != undefined && operator != undefined) {
-                        calculateResult();
-                        firstArgument = secondArgument = operator = undefined;
-                    }
-                    break;
-
-                default:
-                    if (firstArgument != undefined && secondArgument != undefined && operator != undefined) {
-                        firstArgument = calculateResult();
-                        secondArgument = undefined;
-                        operator = e.target.innerText;
-                    } else if (firstArgument != undefined) {
-                        operator = e.target.innerText;
-                    }
-                    break;
-            }
+            default:
+                addDigit(e.target.innerText);
+                break;
         }
-    });
+    }
 });
 
 function reset() {
@@ -84,6 +59,44 @@ function deleteLastDigit() {
     }
 }
 
+function updateState(operatorText) {
+    if (firstArgument != undefined && secondArgument != undefined && operator != undefined) {
+        firstArgument = calculateResult();
+        secondArgument = undefined;
+        operator = operatorText;
+    } else if (firstArgument != undefined) {
+        operator = operatorText;
+    }
+}
+
+function resetState() {
+    firstArgument = secondArgument = operator = undefined;
+}
+
+function addDigit(digitText) {
+    switch (operator) {
+        case undefined:
+            if (firstArgument == undefined) {
+                screen.innerText = digitText;
+            } else {
+                screen.innerText = Number(screen.innerText + digitText);
+            }
+
+            firstArgument = parseInt(screen.innerText);
+            break;
+
+        default:
+            if (secondArgument == undefined) {
+                screen.innerText = digitText;
+            } else {
+                screen.innerText = Number(screen.innerText + digitText);
+            }
+
+            secondArgument = parseInt(screen.innerText);
+            break;
+    }
+}
+
 function add(x, y) {
     return x + y;
 }
@@ -101,6 +114,10 @@ function divide(x, y) {
 }
 
 function calculateResult() {
+    if (secondArgument == undefined) {
+        return;
+    }
+
     switch (operator) {
         case '+':
             screen.innerText = add(firstArgument, secondArgument);
@@ -109,7 +126,7 @@ function calculateResult() {
         case '−':
             screen.innerText = substract(firstArgument, secondArgument);
             break;
-                
+
         case '×':
             screen.innerText = multiply(firstArgument, secondArgument);
             break;
@@ -124,6 +141,7 @@ function calculateResult() {
             break;
     }
 
+    resetState();
     return parseInt(screen.innerText);
 }
 
@@ -134,6 +152,6 @@ function formatDecimalNumber(decimalNumber) {
     if (decimalNumberPartsArr[1].length <= availableLength) {
         return decimalNumber;
     }
-    
+
     return decimalNumber.toFixed(availableLength);
 }
