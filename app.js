@@ -1,34 +1,34 @@
-let screen = document.querySelector('.screen');
+const myCalculatorAPI = createCalculator();
 
-const MAX_DISPLAY_LENGTH = 14;
-let firstArgument, secondArgument;
-let operator;
+myCalculatorAPI.init({
+    screenSelector: '.screen',
+    buttonsWrapperSelector: '.buttons'
+});
 
-document.querySelectorAll('.btn').forEach(function(btn) {
-    btn.addEventListener('click', function (e) {
-        if (Number.isInteger(parseInt(e.target.innerText))) {
-            switch (operator) {
-                case undefined:
-                    if (firstArgument == undefined) {
-                        screen.innerText = e.target.innerText;
-                    } else {
-                        screen.innerText = Number(screen.innerText + e.target.innerText);
-                    }
+// ********** DEFINITIONS **********
+function createCalculator() {
+    let screen;
 
-                    firstArgument = parseInt(screen.innerText);
-                    break;
+    const MAX_DISPLAY_LENGTH = 14;
+    let firstArgument = 0;
+    let secondArgument;
+    let operator;
+    let screenValue = 0;
 
-                default:
-                    if (secondArgument == undefined) {
-                        screen.innerText = e.target.innerText;
-                    } else {
-                        screen.innerText = Number(screen.innerText + e.target.innerText);
-                    }
+    let api = { init };
+    return api;
 
-                    secondArgument = parseInt(screen.innerText);
-                    break;
-            }
-        } else {
+    function init({ screenSelector, buttonsWrapperSelector }) {
+        screen = document.querySelector(screenSelector);
+        render();
+
+        // Utilisation d'un seul event listener qui tire profit de la propagation des évènements
+        document.querySelector(buttonsWrapperSelector).addEventListener('click', handleButtonClick);
+    }
+
+    // ********** PRIVATE FUNCTIONS **********
+    function handleButtonClick(e) {
+        if (e.target.tagName === 'BUTTON') {
             switch (e.target.innerText) {
                 case 'C':
                     reset();
@@ -39,101 +39,129 @@ document.querySelectorAll('.btn').forEach(function(btn) {
                     break;
 
                 case '=':
-                    if (firstArgument != undefined && secondArgument != undefined && operator != undefined) {
-                        calculateResult();
-                        firstArgument = secondArgument = operator = undefined;
-                    }
+                    calculateResult();
+                    break;
+
+                case '+':
+                case '−':
+                case '×':
+                case '÷':
+                    updateState(e.target.innerText);
                     break;
 
                 default:
-                    if (firstArgument != undefined && secondArgument != undefined && operator != undefined) {
-                        firstArgument = calculateResult();
-                        secondArgument = undefined;
-                        operator = e.target.innerText;
-                    } else if (firstArgument != undefined) {
-                        operator = e.target.innerText;
-                    }
+                    addDigit(e.target.innerText);
                     break;
             }
+
+            render();
         }
-    });
-});
-
-function reset() {
-    screen.innerText = '0';
-    firstArgument = secondArgument = operator = undefined;
-}
-
-function deleteLastDigit() {
-    if (screen.innerText.length == 1) {
-        screen.innerText = 0;
-    } else {
-        screen.innerText = screen.innerText.substring(0, screen.innerText.length - 1);
     }
 
-    // Réinitialisation de l'opérateur si le second argument = undefined
-    // et que le nombre affiché à l'écran est modifié
-    if (operator != undefined && secondArgument == undefined) {
-        operator = undefined;
+    function reset() {
+        firstArgument = 0;
+        secondArgument = operator = undefined;
+
+        updateScreenValue();
     }
 
-    if (operator == undefined) {
-        firstArgument = parseInt(screen.innerText);
-    } else {
-        secondArgument = parseInt(screen.innerText);
-    }
-}
+    function deleteLastDigit() {
+        if (operator == undefined) {
+            firstArgument = Number(String(firstArgument).slice(0, -1));
+        } else {
+            secondArgument = Number(String(secondArgument).slice(0, -1));
+        }
 
-function add(x, y) {
-    return x + y;
-}
+        // Réinitialisation de l'opérateur si le second argument = undefined
+        // et que le nombre affiché à l'écran est modifié
+        if (secondArgument == undefined) {
+            operator = undefined;
+        }
 
-function substract(x, y) {
-    return x - y;
-}
-
-function multiply(x, y) {
-    return x * y;
-}
-
-function divide(x, y) {
-    return x / y;
-}
-
-function calculateResult() {
-    switch (operator) {
-        case '+':
-            screen.innerText = add(firstArgument, secondArgument);
-            break;
-
-        case '−':
-            screen.innerText = substract(firstArgument, secondArgument);
-            break;
-                
-        case '×':
-            screen.innerText = multiply(firstArgument, secondArgument);
-            break;
-
-        case '÷':
-            let result = divide(firstArgument, secondArgument);
-            if (!Number.isInteger(result)) {
-                result = formatDecimalNumber(result);
-            }
-
-            screen.innerText = result;
-            break;
+        updateScreenValue();
     }
 
-    return parseInt(screen.innerText);
-}
-
-function formatDecimalNumber(decimalNumber) {
-    const decimalNumberPartsArr = String(decimalNumber).split('.'); // [integerPart, decimalPart]
-    let availableLength = MAX_DISPLAY_LENGTH - decimalNumberPartsArr[0].length;
-
-    if (decimalNumberPartsArr[1].length <= availableLength) {
-        return decimalNumber;
+    function updateState(operatorText) {
+        calculateResult();
+        operator = operatorText;
     }
-    
-    return decimalNumber.toFixed(availableLength);
+
+    function addDigit(digitText) {
+        if (operator == undefined) {
+            firstArgument = Number(firstArgument + digitText);
+        } else {
+            secondArgument = Number(secondArgument == undefined ? digitText : secondArgument + digitText);
+        }
+
+        updateScreenValue();
+    }
+
+    function add(x, y) {
+        return x + y;
+    }
+
+    function substract(x, y) {
+        return x - y;
+    }
+
+    function multiply(x, y) {
+        return x * y;
+    }
+
+    function divide(x, y) {
+        return x / y;
+    }
+
+    function calculateResult() {
+        if (secondArgument == undefined) {
+            return;
+        }
+
+        switch (operator) {
+            case '+':
+                firstArgument = add(firstArgument, secondArgument);
+                break;
+
+            case '−':
+                firstArgument = substract(firstArgument, secondArgument);
+                break;
+
+            case '×':
+                firstArgument = multiply(firstArgument, secondArgument);
+                break;
+
+            case '÷':
+                firstArgument = divide(firstArgument, secondArgument);
+                if (!Number.isInteger(firstArgument)) {
+                    firstArgument = formatDecimalNumber(firstArgument);
+                }
+                break;
+        }
+
+        secondArgument = operator = undefined;
+        updateScreenValue();
+    }
+
+    function formatDecimalNumber(decimalNumber) {
+        const decimalNumberPartsArr = String(decimalNumber).split('.'); // [integerPart, decimalPart]
+        let availableLength = MAX_DISPLAY_LENGTH - decimalNumberPartsArr[0].length;
+
+        if (decimalNumberPartsArr[1].length <= availableLength) {
+            return decimalNumber;
+        }
+
+        return decimalNumber.toFixed(availableLength);
+    }
+
+    function updateScreenValue() {
+        if (secondArgument == undefined) {
+            screenValue = firstArgument;
+        } else {
+            screenValue = secondArgument;
+        }
+    }
+
+    function render() {
+        screen.innerText = screenValue;
+    }
 }
